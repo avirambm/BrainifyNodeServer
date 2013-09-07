@@ -61,7 +61,6 @@ app.get('/spotify/recommendations/:top_number', spotify.getRecommendationsGlobal
 app.post('/spotify/:uid', spotify.saveSongStatus);
 
 app.get('/setup/reset', setup.resetDB);
-app.post('/setup/songs', setup.insertSongsData);
 
 
 http.createServer(app).listen(app.get('port'), function(){
