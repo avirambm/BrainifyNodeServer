@@ -17,8 +17,8 @@ else { // Local
 
 var express = require('express')
     , routes = require('./routes')
-    , user = require('./routes/emotiv')
-    , question = require('./routes/question')
+    , emotiv = require('./routes/emotiv')
+    , spotify = require('./routes/spotify')
     , http = require('http')
     , path = require('path')
     ,cookieSessions = require('./cookie-sessions')
@@ -34,13 +34,13 @@ app.use(express.favicon());
 app.use(express.logger('dev'));
 app.use(express.bodyParser());
 app.use(express.methodOverride());
-app.use(express.cookieParser('Uzi Hadad rulezzzzzzz!'));
+app.use(express.cookieParser('Brainify rulezzzzzzz!'));
 app.use(cookieSessions('sessionData'));
 
 // ## CORS middleware
 app.use(expressMiddlewares.allowCrossDomain);
 // Check that user is loggedIn
-app.use(expressMiddlewares.isUserLoggedIn);
+//app.use(expressMiddlewares.isUserLoggedIn);
 
 app.use(app.router);
 
@@ -52,15 +52,15 @@ if ('development' == app.get('env')) {
 }
 
 app.get('/', routes.index);
-app.post('/users', user.create);
-app.post('/users/login', user.login);
-app.post('/users/signout', user.signout);
-app.get('/users/isloggedin', user.isloggedin);
+app.post('/emotiv', emotiv.saveSamples);
+app.get('/emotiv/:uid', emotiv.getSamplesAndInstructions);
 
-app.post('/questions', question.submitQuestion);
-app.get('/questions/user', question.getAllUserQuestions);
-app.post('/questions/vote', question.voteQuestion);
-app.get('/questions/rand', question.getRandomQuestion);
+
+app.get('/spotify/recommendations/:uid/:top_number', spotify.getRecommendationsForUser);
+app.get('/spotify/recommendations/:top_number', spotify.getRecommendationsGlobal);
+app.post('/spotify/:uid', spotify.saveSongStatus);
+
+
 
 http.createServer(app).listen(app.get('port'), function(){
     console.log('Express server listening on port ' + app.get('port'));
