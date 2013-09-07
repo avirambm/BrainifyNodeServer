@@ -17,7 +17,7 @@ else { // Local
 
 var express = require('express')
     , routes = require('./routes')
-    , user = require('./routes/user')
+    , user = require('./routes/emotiv')
     , question = require('./routes/question')
     , http = require('http')
     , path = require('path')
