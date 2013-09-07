@@ -2,14 +2,14 @@
  * Created with IntelliJ IDEA.
  * User: Ofer
  * Date: 12/06/13
- * Time: 11:17
+ * Updated: 6/9/13
  * To change this template use File | Settings | File Templates.
  */
 //var SERVER_URL = 'http://crowdopinion2.aws.af.cm';
 var SERVER_URL = 'http://192.168.1.10:8383';
 
-UserProvider = require('./userprovider').UserProvider;
-var userProvider= new UserProvider(GLOBAL.mongo_host, GLOBAL.mongo_port);
+EmotivProvider = require('./emotivprovider').EmotivProvider;
+var emotivProvider= new EmotivProvider(GLOBAL.mongo_host, GLOBAL.mongo_port);
 
 // ## CORS middleware
 // see: http://stackoverflow.com/questions/7067966/how-to-allow-cors-in-express-nodejs
@@ -45,7 +45,7 @@ exports.isUserLoggedIn = function(req, res, next) {
             return;
         }
 
-        userProvider.isUserLoggedIn(req.session.user_id,
+        emotivProvider.isUserLoggedIn(req.session.user_id,
             function( error, is_logged_in) {
                 if(error) {
                     res.statusCode = 400;
