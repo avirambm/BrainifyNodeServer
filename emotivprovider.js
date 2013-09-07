@@ -212,6 +212,7 @@ EmotivProvider.prototype.generateInstructions = function (user, samples_for_inst
                     skip_track = 1;
                 }
                 user.last_song_action = sample.server_time;
+                console.log("Set skip_track=" + skip_track + " time=" + user.last_song_action);
             }
         }
 
@@ -252,6 +253,7 @@ EmotivProvider.prototype.generateInstructions = function (user, samples_for_inst
         // user.last_song_action is set before
         if(change_volume != 0) {
             user.last_volume_action = curr_time;
+            console.log("Set change_volume=" + change_volume + " time=" + user.last_volume_action);
         }
     }
 
