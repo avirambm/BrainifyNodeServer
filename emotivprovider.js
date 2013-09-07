@@ -78,7 +78,7 @@ EmotivProvider.prototype.save = function (data, callback) {
 
     // data = JSON.parse(data);
 
-    if (!data.user_id || !data.samples) {
+    if (data.user_id == undefined || data.user_id == null || data.samples == undefined || data.samples == null) {
         callback("Error: Some fields in input are missing!");
         return;
     }
@@ -279,6 +279,7 @@ EmotivProvider.prototype.getSamplesAndInstructionsForUser = function (user_id_pa
     provider.getOrCreateUser(user_id_param, callback /*errorHandler*/, function getSamplesAndInstructionsForUser_1(users_collection, user) {
         provider.getRelevantSamples(user, callback /*errorHandler*/, function getSamplesAndInstructionsForUser_2(samples_collection, samples_to_send, samples_for_instructions){
             var samples_and_instructions = provider.generateInstructions(user, samples_for_instructions /*more samples*/, samples_to_send);
+            samples_and_instructions.samples = [];
 
             if (samples_and_instructions.connection_strength >= 0.5) {
                 samples_and_instructions.samples = samples_to_send;
