@@ -19,11 +19,11 @@ var VOLUME_ACTION_DELAY = 1000; // 1 second
 
 var WINK_SAMPLES_TO_ACTION = 10;
 
-var TURN_Y_THRESHOLD_UP = 2000;
+var TURN_Y_THRESHOLD_UP = 1000;
 var TURN_Y_THRESHOLD_DOWN = -TURN_Y_THRESHOLD_UP;
 var TURN_X_THRESHOLD_RIGHT = 2000;
 var TURN_X_THRESHOLD_LEFT = -TURN_X_THRESHOLD_RIGHT;
-var GYRO_MAX_MOVE = 5000;
+var GYRO_MAX_MOVE = 10000;
 var CHANGE_VOLUME_SPECTRUM = GYRO_MAX_MOVE - Math.sqrt(TURN_Y_THRESHOLD_UP * TURN_Y_THRESHOLD_UP + TURN_X_THRESHOLD_RIGHT * TURN_X_THRESHOLD_RIGHT);
 var CHANGE_VOLUME_NORMAL = 0.4;
 
@@ -193,7 +193,7 @@ EmotivProvider.prototype.generateInstructions = function (user, samples_for_inst
     // connection_strength
     if (samples_to_send.length != 0) {
         for (var i = 0; i < samples_to_send.length; i++) {
-            connection_strength += sample.connection_strength;
+            connection_strength += samples_to_send[i].connection_strength;
         }
         connection_strength /= samples_to_send.length;
     }
@@ -201,7 +201,7 @@ EmotivProvider.prototype.generateInstructions = function (user, samples_for_inst
     for (var j = 0; j < samples_for_instructions.length; j++) {
         var sample = samples_for_instructions[j];
 
-        // skip_track
+        // skip_track - determining whether reached WINKS_SAMPLES_TO_ACTION
         if (skip_track == 0 && (sample.server_time - user.last_song_action > SONG_ACTION_DELAY)) {
             winks_left = sample.wink_left ? (winks_left + 1) : (winks_left);
             winks_right = sample.wink_right ? (winks_right + 1) : (winks_right);
@@ -215,7 +215,7 @@ EmotivProvider.prototype.generateInstructions = function (user, samples_for_inst
             }
         }
 
-        // change_volume
+        // change_volume - determining x_max, x_min, y_max, y_min
         if (sample.server_time - user.last_volume_action > VOLUME_ACTION_DELAY) {
             x_delta += sample.turn_x;
             y_delta += sample.turn_y;
@@ -232,7 +232,7 @@ EmotivProvider.prototype.generateInstructions = function (user, samples_for_inst
         }
     }
 
-    // change_volume
+    // change_volume - normalizing the volume change
     var delta_x = 0;
     var delta_y = 0;
     if (x_max > TURN_X_THRESHOLD_RIGHT && y_max > TURN_Y_THRESHOLD_UP) {
@@ -261,7 +261,7 @@ EmotivProvider.prototype.generateInstructions = function (user, samples_for_inst
     instructions.skip_track = skip_track;
     instructions.change_volume = change_volume;
     return instructions;
-}
+};
 
 // Returns to the user the samples that were received since his last query, and the summarized instructions.
 EmotivProvider.prototype.getSamplesAndInstructionsForUser = function (user_id_param, callback) {
