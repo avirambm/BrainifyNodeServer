@@ -21,7 +21,7 @@ EmotivProvider = function (host, port) {
 
 EmotivProvider.prototype.getEmotivCollection = function (callback) {
     if(!this.db.serverConfig.isConnected()) {
-        callback(Db is not connected!");
+        callback("Db is not connected!");
         return;
     }
 
