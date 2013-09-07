@@ -14,13 +14,18 @@ var BSON = mongodb.BSONPure;
 var ObjectID = mongodb.ObjectID;
 var assert = require('assert');
 
-var SONG_ACTION_DELAY = 2000; // 2 seconds
-var VOLUME_ACTION_DELAY = 2000; // 2 seconds
-var TURN_Y_THERESHOLD_UP = 2000;
-var TURN_Y_THERESHOLD_DOWN = -2000;
-var TURN_X_THERESHOLD_RIGHT = 2000;
-var TURN_X_THERESHOLD_LEFT = -2000;
-var VOLUME_NORMAL = 100;
+var SONG_ACTION_DELAY = 1000; // 1 second
+var VOLUME_ACTION_DELAY = 1000; // 1 second
+
+var WINK_SAMPLES_TO_ACTION = 10;
+
+var TURN_Y_THRESHOLD_UP = 1000;
+var TURN_Y_THRESHOLD_DOWN = -TURN_Y_THRESHOLD_UP;
+var TURN_X_THRESHOLD_RIGHT = 2000;
+var TURN_X_THRESHOLD_LEFT = -TURN_X_THRESHOLD_RIGHT;
+var GYRO_MAX_MOVE = 10000;
+var CHANGE_VOLUME_SPECTRUM = GYRO_MAX_MOVE - Math.sqrt(TURN_Y_THRESHOLD_UP * TURN_Y_THRESHOLD_UP + TURN_X_THRESHOLD_RIGHT * TURN_X_THRESHOLD_RIGHT);
+var CHANGE_VOLUME_NORMAL = 0.4;
 
 var MAX_SAMPLES = 50;
 var MILLISECONDS_OF_SAMPLES_BACK = 1000 * 3;
@@ -110,28 +115,6 @@ EmotivProvider.prototype.save = function (data, callback) {
     });
 };
 
-EmotivProvider.prototype.checkSongAction = function(item) {
-    if (item.turn_y > TURN_Y_THERESHOLD_UP) {
-        if (item.turn_x > TURN_X_THERESHOLD_RIGHT) {
-            return 1;
-        } else if (item.turn_x < TURN_X_THERESHOLD_LEFT) {
-            return -1;
-        }
-    }
-    return 0;
-}
-
-EmotivProvider.prototype.checkVolumeAction = function(item) {
-    if (item.turn_y > TURN_Y_THERESHOLD_UP) {
-        if (item.turn_x > TURN_X_THERESHOLD_LEFT && item.turn_x < TURN_X_THERESHOLD_RIGHT) {
-            return (item.turn_y - TURN_Y_THERESHOLD_UP) / VOLUME_NORMAL;
-        }
-    } else if (item.turn_y < TURN_Y_THERESHOLD_DOWN) {
-        return (TURN_Y_THERESHOLD_DOWN - item.turn_y) / VOLUME_NORMAL;
-    }
-    return 0;
-}
-
 EmotivProvider.prototype.getOrCreateUser = function (user_id_param, errorHandler, callback) {
     user_id_param = parseInt(user_id_param);
     this.getUserCollection(function (error, users_collection) {
@@ -199,32 +182,79 @@ EmotivProvider.prototype.generateInstructions = function (user, samples_for_inst
     var change_volume = 0;
     var should_take_action = false;
     var curr_time = new Date().getTime();
+    var x_delta = 0;
+    var y_delta = 0;
+    var x_max = 0;
+    var x_min = 0;
+    var y_max = 0;
+    var y_min = 0;
+    var winks_left = 0;
+    var winks_right = 0;
 
-    for (var i = 0; i < samples_to_send.length; i++) {
-        var item = samples_to_send[i];
-
-        connection_strength += item.connection_strength;
-
-        if (item.server_time - user.last_song_action > SONG_ACTION_DELAY && skip_track == 0) {
-            skip_track = this.checkSongAction(item);
-        }
-
-        if (item.server_time - user.last_volume_action > VOLUME_ACTION_DELAY && change_volume == 0) {
-            change_volume = this.checkVolumeAction(item);
-        }
-    }
-
+    // connection_strength
     if (samples_to_send.length != 0) {
+        for (var i = 0; i < samples_to_send.length; i++) {
+            connection_strength += samples_to_send[i].connection_strength;
+        }
         connection_strength /= samples_to_send.length;
     }
 
+    for (var j = 0; j < samples_for_instructions.length; j++) {
+        var sample = samples_for_instructions[j];
+
+        // skip_track - determining whether reached WINKS_SAMPLES_TO_ACTION
+        if (skip_track == 0 && (sample.server_time - user.last_song_action > SONG_ACTION_DELAY)) {
+            winks_left = sample.wink_left ? (winks_left + 1) : (winks_left);
+            winks_right = sample.wink_right ? (winks_right + 1) : (winks_right);
+            if (winks_left == WINK_SAMPLES_TO_ACTION || winks_right == WINK_SAMPLES_TO_ACTION) {
+                if (winks_left == WINK_SAMPLES_TO_ACTION) {
+                    skip_track = -1;
+                } else {
+                    skip_track = 1;
+                }
+                user.last_song_action = sample.server_time;
+                console.log("Set skip_track=" + skip_track + " time=" + user.last_song_action);
+            }
+        }
+
+        // change_volume - determining x_max, x_min, y_max, y_min
+        if (sample.server_time - user.last_volume_action > VOLUME_ACTION_DELAY) {
+            x_delta += sample.turn_x;
+            y_delta += sample.turn_y;
+            if (x_delta > x_max) {
+                x_max = x_delta;
+            } else if (x_delta < x_min) {
+                x_min = x_delta
+            }
+            if (y_delta > y_max) {
+                y_max = y_delta;
+            } else if (y_delta < y_min) {
+                y_min = y_delta;
+            }
+        }
+    }
+
+    // change_volume - normalizing the volume change
+    var delta_x = 0;
+    var delta_y = 0;
+    if (x_max > TURN_X_THRESHOLD_RIGHT && y_max > TURN_Y_THRESHOLD_UP) {
+        delta_x = x_max - TURN_X_THRESHOLD_RIGHT;
+        delta_y = y_max - TURN_Y_THRESHOLD_UP;
+        change_volume = 1;
+    } else if (x_min < TURN_X_THRESHOLD_LEFT && y_min < TURN_Y_THRESHOLD_DOWN) {
+        delta_x = TURN_X_THRESHOLD_LEFT - x_min;
+        delta_y = TURN_Y_THRESHOLD_DOWN - y_min;
+        change_volume = -1;
+    }
+    change_volume *= (Math.sqrt(delta_x * delta_x + delta_y * delta_y) / CHANGE_VOLUME_SPECTRUM)/*0..1*/ * CHANGE_VOLUME_NORMAL/*0..0.4*/;
+
+    // should_take_action
     if (skip_track != 0 || change_volume != 0) {
         should_take_action = true;
-        if(skip_track != 0) {
-            user.last_song_action = curr_time;
-        }
+        // user.last_song_action is set before
         if(change_volume != 0) {
             user.last_volume_action = curr_time;
+            console.log("Set change_volume=" + change_volume + " time=" + user.last_volume_action);
         }
     }
 
@@ -234,7 +264,7 @@ EmotivProvider.prototype.generateInstructions = function (user, samples_for_inst
     instructions.skip_track = skip_track;
     instructions.change_volume = change_volume;
     return instructions;
-}
+};
 
 // Returns to the user the samples that were received since his last query, and the summarized instructions.
 EmotivProvider.prototype.getSamplesAndInstructionsForUser = function (user_id_param, callback) {
