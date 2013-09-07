@@ -1,71 +1,47 @@
 /**
- * Created with IntelliJ IDEA.
+ * Handles Spotify data input and requests for songs recommendations.
  * User: ofer
  * Date: 06/09/13
- * Time: 21:36
- * To change this template use File | Settings | File Templates.
+ * Time: 21:35
  */
+SpotifyProvider = require('../spotifyprovider').SpotifyProvider;
+var spotifyProvider = new SpotifyProvider(GLOBAL.mongo_host, GLOBAL.mongo_port);
 
-
-/*
- * GET users listing.
- */
-
-UserProvider = require('../userprovider').UserProvider;
-var userProvider= new UserProvider('localhost', 27017);
-
-exports.create = function(req, res){
-    userProvider.save({
-        email_address: req.param('email_address'),
-        password: req.param('password'),
-        full_name: req.param('full_name')
-    }, function( error, user) {
+exports.getRecommendationsForUser = function(req, res){
+    spotifyProvider.getRecommendationsForUser(req.params.uid, req.params.top_number, function( error, recommendations_for_user) {
         if(error) {
+            console.log(error.toString());
             res.statusCode = 400;
-            res.send(error);
+            res.send(error.toString());
         } else {
-            req.session.user_id = user._id.toString();
-            res.send(200);
+            res.statusCode = 200;
+            res.send(recommendations_for_user);
         }
     });
 };
 
-exports.login = function(req, res){
-    userProvider.loginUser({
-        email_address: req.param('email_address'),
-        password: req.param('password')
-    }, function( error, is_valid, user) {
+exports.getRecommendationsGlobal = function(req, res){
+    spotifyProvider.getGlobalRecommendations(req.params.top_number, function( error, global_recommendations) {
         if(error) {
+            console.log(error.toString());
             res.statusCode = 400;
-            res.send(error);
+            res.send(error.toString());
         } else {
-            if(is_valid) {
-                req.session.user_id = user._id.toString();
-                res.statusCode = 200;
-                var newUser = {};
-                newUser.email_address = user.email_address;
-                newUser.full_name = user.full_name;
-                newUser.created_at = user.created_at;
-                newUser.remaining_coins = user.remaining_coins;
-                newUser.last_connection = user.last_connection;
-                res.send(newUser);
-            } else {
-                req.session.user_id = undefined;
-                res.statusCode = 403;
-                res.send("UserName or Password incorrect!");
-            }
+            res.statusCode = 200;
+            res.send(global_recommendations);
         }
     });
 };
 
-exports.isloggedin = function(req, res){
-    // Will be returned only if the middleware will not return 403 before...
-    res.send(200);
+exports.saveSongStatus = function(req, res){
+    spotifyProvider.saveSongStatus(req.params.uid, req.body, function( error, song_statistics) {
+        if(error) {
+            console.log(error.toString());
+            res.statusCode = 400;
+            res.send(error.toString());
+        } else {
+            res.statusCode = 200;
+            res.send(song_statistics);
+        }
+    });
 };
-
-exports.signout = function(req, res){
-    req.session.user_id = undefined;
-    res.statusCode = 200;
-    res.send("User logged out successfully!");
-};
-
