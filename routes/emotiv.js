@@ -23,7 +23,7 @@ exports.saveSamples = function(req, res){
 };
 
 exports.getSamplesAndInstructions = function(req, res){
-    emotivProvider.getSamplesAndInstructionsForUser(req.params.uid, function( error, samples_and_instructions) {
+    emotivProvider.getSamplesAndInstructionsForUser(parseInt(req.params.uid), function( error, samples_and_instructions) {
         if(error) {
             console.log(error.toString());
             res.statusCode = 400;

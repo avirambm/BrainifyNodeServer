@@ -93,7 +93,7 @@ EmotivProvider.prototype.save = function (data, callback) {
 
     // Add to all samples user id and adjusted server time
     samples.forEach(function(item) {
-        item.user_id = user_id;
+        item.user_id = parseInt(user_id);
         item.server_time = item.local_time + time_offset;
     });
 
@@ -133,6 +133,7 @@ EmotivProvider.prototype.checkVolumeAction = function(item) {
 }
 
 EmotivProvider.prototype.getOrCreateUser = function (user_id_param, errorHandler, callback) {
+    user_id_param = parseInt(user_id_param);
     this.getUserCollection(function (error, users_collection) {
         if (error) {
             errorHandler(error);
@@ -237,11 +238,12 @@ EmotivProvider.prototype.generateInstructions = function (user, samples_for_inst
 
 // Returns to the user the samples that were received since his last query, and the summarized instructions.
 EmotivProvider.prototype.getSamplesAndInstructionsForUser = function (user_id_param, callback) {
-    if (!user_id_param) {
+    if (user_id_param === null || user_id_param === undefined) {
         callback("Error: No user id supplied!");
         return;
     }
 
+    user_id_param = parseInt(user_id_param);
     var provider = this;
 
     provider.getOrCreateUser(user_id_param, callback /*errorHandler*/, function getSamplesAndInstructionsForUser_1(users_collection, user) {

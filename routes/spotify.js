@@ -8,7 +8,7 @@ SpotifyProvider = require('../spotifyprovider').SpotifyProvider;
 var spotifyProvider = new SpotifyProvider(GLOBAL.mongo_host, GLOBAL.mongo_port);
 
 exports.getRecommendationsForUser = function(req, res){
-    spotifyProvider.getRecommendationsForUser(req.params.uid, req.params.top_number, function( error, recommendations_for_user) {
+    spotifyProvider.getRecommendationsForUser(parseInt(req.params.uid), req.params.top_number, function( error, recommendations_for_user) {
         if(error) {
             console.log(error.toString());
             res.statusCode = 400;
@@ -21,7 +21,7 @@ exports.getRecommendationsForUser = function(req, res){
 };
 
 exports.getRecommendationsGlobal = function(req, res){
-    spotifyProvider.getGlobalRecommendations(req.params.top_number, function( error, global_recommendations) {
+    spotifyProvider.getGlobalRecommendations(parseInt(req.params.top_number), function( error, global_recommendations) {
         if(error) {
             console.log(error.toString());
             res.statusCode = 400;
@@ -34,7 +34,7 @@ exports.getRecommendationsGlobal = function(req, res){
 };
 
 exports.saveSongStatus = function(req, res){
-    spotifyProvider.saveSongStatus(req.params.uid, req.body, function( error, song_statistics) {
+    spotifyProvider.saveSongStatus(parseInt(req.params.uid), req.body, function( error, song_statistics) {
         if(error) {
             console.log(error.toString());
             res.statusCode = 400;
