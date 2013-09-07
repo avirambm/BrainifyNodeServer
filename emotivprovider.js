@@ -21,7 +21,7 @@ EmotivProvider = function (host, port) {
 
 EmotivProvider.prototype.getEmotivCollection = function (callback) {
     if(!this.db.serverConfig.isConnected()) {
-        callback("Db is not connected!");
+        callback(Db is not connected!");
         return;
     }
 
@@ -53,10 +53,42 @@ EmotivProvider.prototype.getUserCollection = function (callback) {
 
 // save new samples to db
 EmotivProvider.prototype.save = function (data, callback) {
-
+    callback(null);
 };
 
 EmotivProvider.prototype.getSamplesAndInstructionsForUser = function (user_id_param, callback) {
+    var samples_and_instructions = {
+        connection_strength: 0.8,
+        should_take_action: true,
+        skip_track: -1,
+        change_volume: -0.3,
+        samples: [
+            {
+                local_time: 1377588500605,
+                meditation: 0.5,
+                engagement: 0.3,
+                happiness: 0.7,
+                excitement: 0.1,
+                wink_left: true,
+                wink_right: false,
+                turn_x: 321,
+                turn_y: 3431
+            },
+            {
+                local_time: 1377588503000,
+                meditation: 0.5,
+                engagement: 0.3,
+                happiness: 0.7,
+                excitement: 0.1,
+                wink_left: true,
+                wink_right: false,
+                turn_x: -4023,
+                turn_y: 1022
+            }
+        ]
+    };
+
+    callback(null, samples_and_instructions);
 
 };
 
