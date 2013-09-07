@@ -129,9 +129,20 @@ SpotifyProvider.prototype.getRecommendationsForUser = function (user_id, top_num
 
 };
 
-// Get the records in user private rating table
+// Get the records in global rating table
 SpotifyProvider.prototype.getGlobalRecommendations = function (top_number, callback) {
-
+    var recommendation_result = {
+        top_number: top_number
+    };
+    var provider = this;
+    this.getGlobalRatingCollection(function (error, global_rating_collection) {
+        if (error) {
+            callback(error);
+            return;
+        } else {
+            provider.returnTopRated(recommendation_result, global_rating_collection, null, top_number, callback);
+        }
+    });
 };
 
 
