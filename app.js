@@ -19,6 +19,7 @@ var express = require('express')
     , routes = require('./routes')
     , emotiv = require('./routes/emotiv')
     , spotify = require('./routes/spotify')
+    , setup = require('./routes/setup')
     , http = require('http')
     , path = require('path')
     ,cookieSessions = require('./cookie-sessions')
@@ -55,11 +56,11 @@ app.get('/', routes.index);
 app.post('/emotiv', emotiv.saveSamples);
 app.get('/emotiv/:uid', emotiv.getSamplesAndInstructions);
 
-
 app.get('/spotify/recommendations/:uid/:top_number', spotify.getRecommendationsForUser);
 app.get('/spotify/recommendations/:top_number', spotify.getRecommendationsGlobal);
 app.post('/spotify/:uid', spotify.saveSongStatus);
 
+app.get('/setup/reset', setup.resetDB);
 
 
 http.createServer(app).listen(app.get('port'), function(){
