@@ -18,7 +18,7 @@ EmotivProvider = require('./emotivprovider').EmotivProvider;
 var emotivProvider = new EmotivProvider(GLOBAL.mongo_host, GLOBAL.mongo_port);
 
 SpotifyProvider = function (host, port) {
-    this.db = new Db('node_mongo_brainify', new Server(host, port, {safe: false}, {auto_reconnect: true}, {}));
+    this.db = new Db('node_mongo_Brainify', new Server(host, port, {safe: false}, {auto_reconnect: true}, {}));
     this.db.open(function () {
     });
 };
