@@ -21,6 +21,7 @@ var TURN_Y_THERESHOLD_DOWN = -2000;
 var TURN_X_THERESHOLD_RIGHT = 2000;
 var TURN_X_THERESHOLD_LEFT = -2000;
 var VOLUME_NORMAL = 100;
+var WINK_SAMPLES_TO_ACTION = 10;
 
 var MAX_SAMPLES = 50;
 var MILLISECONDS_OF_SAMPLES_BACK = 1000 * 3;
@@ -199,17 +200,50 @@ EmotivProvider.prototype.generateInstructions = function (user, samples_for_inst
     var should_take_action = false;
     var curr_time = new Date().getTime();
 
-    for (var i = 0; i < samples_to_send.length; i++) {
-        var item = samples_to_send[i];
+    var x_delta = 0;
+    var y_delta = 0;
+    var x_max = 0;
+    var y_max = 0;
 
-        connection_strength += item.connection_strength;
+    var winks_left = 0;
+    var winks_right = 0;
 
-        if (item.server_time - user.last_song_action > SONG_ACTION_DELAY && skip_track == 0) {
-            skip_track = this.checkSongAction(item);
+    for (var i = 0; i < samples_for_instructions.length; i++) {
+        var sample = samples_for_instructions[i];
+
+        connection_strength += sample.connection_strength;
+
+        if (skip_track == 0 && (sample.server_time - user.last_song_action > SONG_ACTION_DELAY)) {
+            winks_left = sample.wink_left ? (winks_left + 1) : 0;
+            winks_right = sample.wink_right ? (winks_right + 1) : 0;
+
         }
 
-        if (item.server_time - user.last_volume_action > VOLUME_ACTION_DELAY && change_volume == 0) {
-            change_volume = this.checkVolumeAction(item);
+        if (skip_track == 0 && (sample.server_time - user.last_song_action > SONG_ACTION_DELAY)) {
+
+            if (x_delta > TURN_X_THERESHOLD_RIGHT && y_delta > TURN_Y_THERESHOLD_UP) {
+
+            } else if (x_delta < TURN_X_THERESHOLD_LEFT && y_delta < TURN_Y_THERESHOLD_DOWN) {
+
+            }
+
+        }
+
+        x_delta += sample.turn_x;
+        y_delta += sample.turn_y;
+
+        if (((x_delta > TURN_X_THERESHOLD_RIGHT && y_delta > TURN_Y_THERESHOLD_UP)
+            || (x_delta < TURN_X_THERESHOLD_LEFT && y_delta < TURN_Y_THERESHOLD_DOWN))
+            && (sample.server_time - user.last_song_action > SONG_ACTION_DELAY && skip_track == 0)) {
+            skip_track = this.checkSongAction(sample);
+        }
+
+        if (sample.server_time - user.last_song_action > SONG_ACTION_DELAY && skip_track == 0) {
+            skip_track = this.checkSongAction(sample);
+        }
+
+        if (sample.server_time - user.last_volume_action > VOLUME_ACTION_DELAY && change_volume == 0) {
+            change_volume = this.checkVolumeAction(sample);
         }
     }
 
