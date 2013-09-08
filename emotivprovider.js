@@ -14,21 +14,21 @@ var BSON = mongodb.BSONPure;
 var ObjectID = mongodb.ObjectID;
 var assert = require('assert');
 
-var SONG_ACTION_DELAY = 1000; // 1 second
-var VOLUME_ACTION_DELAY = 1000; // 1 second
+var SONG_ACTION_DELAY = 3000;
+var VOLUME_ACTION_DELAY = 3000; // 1 second
 
-var WINK_SAMPLES_TO_ACTION = 10;
+var WINK_SAMPLES_TO_ACTION = 15;
 
-var TURN_Y_THRESHOLD_UP = 1000;
+var TURN_Y_THRESHOLD_UP = 2000;
 var TURN_Y_THRESHOLD_DOWN = -TURN_Y_THRESHOLD_UP;
-var TURN_X_THRESHOLD_RIGHT = 2000;
+var TURN_X_THRESHOLD_RIGHT = 3000;
 var TURN_X_THRESHOLD_LEFT = -TURN_X_THRESHOLD_RIGHT;
-var GYRO_MAX_MOVE = 10000;
+var GYRO_MAX_MOVE = 14000;
 var CHANGE_VOLUME_SPECTRUM = GYRO_MAX_MOVE - Math.sqrt(TURN_Y_THRESHOLD_UP * TURN_Y_THRESHOLD_UP + TURN_X_THRESHOLD_RIGHT * TURN_X_THRESHOLD_RIGHT);
 var CHANGE_VOLUME_NORMAL = 0.4;
 
 var MAX_SAMPLES = 50;
-var MILLISECONDS_OF_SAMPLES_BACK = 1000 * 3;
+var MILLISECONDS_OF_SAMPLES_BACK = 2000;
 
 EmotivProvider = function (host, port) {
     this.db = new Db('node_mongo_Brainify', new Server(host, port, {safe: false}, {auto_reconnect: true}, {}));
@@ -192,7 +192,7 @@ EmotivProvider.prototype.generateInstructions = function (user, samples_for_inst
     var winks_right = 0;
 
     // connection_strength
-    if (samples_to_send.length != 0) {
+    if (samples_for_instructions.length != 0) {
         for (var i = 0; i < samples_for_instructions.length; i++) {
             connection_strength += samples_for_instructions[i].connection_strength;
         }
@@ -246,7 +246,8 @@ EmotivProvider.prototype.generateInstructions = function (user, samples_for_inst
         delta_y = TURN_Y_THRESHOLD_DOWN - y_min;
         change_volume = -1;
     }
-    change_volume *= (Math.sqrt(delta_x * delta_x + delta_y * delta_y) / CHANGE_VOLUME_SPECTRUM)/*0..1*/ * CHANGE_VOLUME_NORMAL/*0..0.4*/;
+    var head_movement = Math.sqrt(delta_x * delta_x + delta_y * delta_y);
+    change_volume *= (head_movement / CHANGE_VOLUME_SPECTRUM)/*0..1*/ * CHANGE_VOLUME_NORMAL/*0..0.4*/;
 
     // should_take_action
     if (skip_track != 0 || change_volume != 0) {
@@ -254,6 +255,7 @@ EmotivProvider.prototype.generateInstructions = function (user, samples_for_inst
         // user.last_song_action is set before
         if(change_volume != 0) {
             user.last_volume_action = curr_time;
+            console.log("Head movement:  " + head_movement + "  deltaX: " + delta_x + "  deltaY: " + delta_y);
             console.log("Set change_volume=" + change_volume + " time=" + user.last_volume_action);
         }
     }
