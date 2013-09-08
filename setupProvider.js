@@ -1562,7 +1562,7 @@ SetupProvider.prototype.reset = function (callback) {
                     callback(error);
                 }
                 else {
-                    users_collection.insert({user_id: 0, last_sample_time:0, last_volume_action:0, last_song_action:0});
+                    users_collection.insert({user_id: 0, last_sample_time:0, last_volume_action:0, last_song_action:0}, {w: 0});
                     provider.insertSongsData(callback);
                 }
             });
@@ -1595,7 +1595,7 @@ SetupProvider.prototype.insertSongsData = function (callback) {
                     excitement:song_data.excitement
                 };
 
-                global_rating_collection.insert(record);
+                global_rating_collection.insert(record, {w: 0});
                 global_counter++;
             });
         }
@@ -1619,7 +1619,7 @@ SetupProvider.prototype.insertSongsData = function (callback) {
                     excitement:song_data.excitement
                 };
 
-                private_rating_collection.insert(record);
+                private_rating_collection.insert(record, {w: 0});
                 users_counter++;
             });
         }

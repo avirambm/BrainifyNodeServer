@@ -17,8 +17,17 @@ EmotivProvider = require('./emotivprovider').EmotivProvider;
 var emotivProvider = new EmotivProvider(GLOBAL.mongo_host, GLOBAL.mongo_port);
 
 SpotifyProvider = function (host, port) {
-    this.db = new Db('node_mongo_Brainify', new Server(host, port, {safe: false}, {auto_reconnect: true}, {}));
-    this.db.open(function () {
+//    this.db = new Db('node_mongo_Brainify', new Server(host, port, {safe: false}, {auto_reconnect: true}, {}));
+//    this.db.open(function () {
+//    });
+    var provider = this;
+    var connectionString = process.env.CUSTOMCONNSTR_MONGOLAB_URI || "mongodb://127.0.0.1:27017";
+    Db.connect(connectionString, function(err, db1) {
+        if (err) {
+            console.log(err);
+        } else {
+            provider.db = db1;
+        }
     });
 };
 
@@ -192,7 +201,7 @@ SpotifyProvider.prototype.updateSongStatus = function (user_id, song_id, is_play
                     start_time: curr_time,
                     end_time: 0
                 };
-                played_intervals_collection.insert(new_record);
+                played_intervals_collection.insert(new_record, {w: 0});
             } else { // We need to close the previous record and to calculate the song statistics.
                 played_intervals_collection.find({user_id: user_id, song_id: song_id}).sort({start_time: -1}).limit(1).toArray(function (error, song_intervals) {
                     if (error) {
@@ -217,7 +226,7 @@ SpotifyProvider.prototype.updateSongStatus = function (user_id, song_id, is_play
                     played_intervals_collection.update(
                         { _id: curr_song_interval._id },
                         { $set: { end_time: curr_time } },
-                        { multi: false }
+                        { multi: false, w: 0 }
                     );
 
                     provider.updateSongRatingOnEnd(user_id, song_id, curr_song_interval.start_time, curr_time);
@@ -289,7 +298,7 @@ SpotifyProvider.prototype.updateSongRatingOnEnd_calcAndUpdate = function (user_i
                         happiness: happiness,
                         excitement: excitement
                     };
-                    global_rating_collection.insert(new_record);
+                    global_rating_collection.insert(new_record, {w: 0});
                 } else { // We need to update the current record
                     var old_record = songs_array[0];
 
@@ -302,7 +311,7 @@ SpotifyProvider.prototype.updateSongRatingOnEnd_calcAndUpdate = function (user_i
                             happiness: provider.calcAveragedRating(old_record.happiness, old_record.samples_num, happiness, samples_number),
                             excitement: provider.calcAveragedRating(old_record.excitement, old_record.samples_num, excitement, samples_number)
                         } },
-                        { multi: false }
+                        { multi: false, w: 0 }
                     );
                 }
             });
@@ -342,7 +351,7 @@ SpotifyProvider.prototype.updateSongRatingOnEnd_calcAndUpdate = function (user_i
                         happiness: happiness,
                         excitement: excitement
                     };
-                    private_rating_collection.insert(new_record);
+                    private_rating_collection.insert(new_record, {w: 0});
                 } else { // We need to update the current record
                     var old_record = songs_array[0];
 
@@ -355,7 +364,7 @@ SpotifyProvider.prototype.updateSongRatingOnEnd_calcAndUpdate = function (user_i
                             happiness: provider.calcAveragedRating(old_record.happiness, old_record.samples_num, happiness, samples_number),
                             excitement: provider.calcAveragedRating(old_record.excitement, old_record.samples_num, excitement, samples_number)
                         } },
-                        { multi: false }
+                        { multi: false, w: 0 }
                     );
                 }
             });

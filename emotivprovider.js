@@ -31,8 +31,17 @@ var MAX_SAMPLES = 50;
 var MILLISECONDS_OF_SAMPLES_BACK = 2000;
 
 EmotivProvider = function (host, port) {
-    this.db = new Db('node_mongo_Brainify', new Server(host, port, {safe: false}, {auto_reconnect: true}, {}));
-    this.db.open(function () {
+//    this.db = new Db('node_mongo_Brainify', new Server(host, port, {safe: false}, {auto_reconnect: true}, {}));
+//    this.db.open(function () {
+//    });
+    var provider = this;
+    var connectionString = process.env.CUSTOMCONNSTR_MONGOLAB_URI || "mongodb://127.0.0.1:27017";
+    Db.connect(connectionString, function(err, db1) {
+        if (err) {
+            console.log(err);
+        } else {
+            provider.db = db1;
+        }
     });
 };
 
@@ -108,7 +117,7 @@ EmotivProvider.prototype.save = function (data, callback) {
             return;
         }
         else {
-            samples_collection.insert(samples);
+            samples_collection.insert(samples, {w: 0});
             callback(null);
             return;
         }
@@ -297,7 +306,7 @@ EmotivProvider.prototype.getSamplesAndInstructionsForUser = function (user_id_pa
             users_collection.update(
                 { _id: user._id },
                 user,
-                { multi: false }
+                { multi: false, w: 0 }
             );
 
             callback(null, samples_and_instructions);
