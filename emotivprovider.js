@@ -193,10 +193,10 @@ EmotivProvider.prototype.generateInstructions = function (user, samples_for_inst
 
     // connection_strength
     if (samples_to_send.length != 0) {
-        for (var i = 0; i < samples_to_send.length; i++) {
-            connection_strength += samples_to_send[i].connection_strength;
+        for (var i = 0; i < samples_for_instructions.length; i++) {
+            connection_strength += samples_for_instructions[i].connection_strength;
         }
-        connection_strength /= samples_to_send.length;
+        connection_strength /= samples_for_instructions.length;
     }
 
     for (var j = 0; j < samples_for_instructions.length; j++) {
