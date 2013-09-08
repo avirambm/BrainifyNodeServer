@@ -1523,8 +1523,17 @@ var SONGS_DATA = {
 };
 
 SetupProvider = function (host, port) {
-    this.db = new Db('node_mongo_Brainify', new Server(host, port, {safe: false}, {auto_reconnect: true}, {}));
-    this.db.open(function () {
+//    this.db = new Db('node_mongo_Brainify', new Server(host, port, {safe: false}, {auto_reconnect: true}, {}));
+//    this.db.open(function () {
+//    });
+    var provider = this;
+    var connectionString = process.env.CUSTOMCONNSTR_MONGOLAB_URI || "mongodb://127.0.0.1:27017";
+    Db.connect(connectionString, function(err, db1) {
+        if (err) {
+            console.log(err);
+        } else {
+            provider.db = db1;
+        }
     });
 };
 
@@ -1540,16 +1549,16 @@ SetupProvider.prototype.reset = function (callback) {
 
     var provider = this;
     this.db.collection('emotiv_samples', function(err, collection) {
-        collection.remove({});
+        collection.remove({}, {w: 0});
     });
     this.db.collection('spotify_played_intervals', function(err, collection) {
-        collection.remove({});
+        collection.remove({}, {w: 0});
     });
     this.db.collection('spotify_global_rating', function(err, collection) {
-        collection.remove({});
+        collection.remove({}, {w: 0});
     });
     this.db.collection('spotify_private_rating', function(err, collection) {
-        collection.remove({});
+        collection.remove({}, {w: 0});
     });
     this.db.collection('users', function(err, collection) {
         collection.remove({},{w:1}, function(error, removedNum){
